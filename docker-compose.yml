@@ -46,8 +46,8 @@ services:
   # ── voltwise-cloud (Django + Gunicorn) ───────────────────────────────────
   cloud:
     build:
-      context: .
-      dockerfile: docker/cloud/Dockerfile
+      context: ..
+      dockerfile: voltwise-docker/docker/cloud/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
@@ -74,8 +74,8 @@ services:
   # ── voltwise-ocpp (Go WebSocket server) ──────────────────────────────────
   ocpp:
     build:
-      context: .
-      dockerfile: docker/ocpp/Dockerfile
+      context: ..
+      dockerfile: voltwise-docker/docker/ocpp/Dockerfile
     restart: unless-stopped
     environment:
       OCPP_ADDR: ":8080"
