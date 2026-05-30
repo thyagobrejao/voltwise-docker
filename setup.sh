@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Definir o usuário do GitHub
+# Define the GitHub user
 GITHUB_USER="thyagobrejao"
 
-# Lista de repositórios do ecossistema VoltWise
+# List of repositories in the VoltWise ecosystem
 REPOS=(
     "voltwise-cloud"
     "voltwise-portal"
@@ -15,21 +15,21 @@ REPOS=(
     "voltwise-agent"
 )
 
-echo "Iniciando a configuração do ambiente de desenvolvimento VoltWise..."
+echo "Starting VoltWise development environment setup..."
 
-# O script assume que será executado dentro da pasta voltwise-docker.
-# Vamos para o diretório pai para clonar os projetos lado a lado.
+# The script assumes it will be executed inside the voltwise-docker folder.
+# Go to the parent directory to clone the projects side-by-side.
 cd ..
 
 for REPO in "${REPOS[@]}"; do
     if [ ! -d "$REPO" ]; then
-        echo "Clonando $REPO..."
+        echo "Cloning $REPO..."
         git clone "git@github.com:$GITHUB_USER/$REPO.git"
     else
-        echo "O diretório $REPO já existe. Fazendo pull das últimas alterações..."
+        echo "The directory $REPO already exists. Pulling the latest changes..."
         (cd "$REPO" && git pull)
     fi
 done
 
-echo "Todos os repositórios foram configurados com sucesso!"
-echo "Para rodar os serviços, volte para a pasta voltwise-docker e utilize o docker-compose."
+echo "All repositories have been successfully set up!"
+echo "To run the services, go back to the voltwise-docker folder and use docker-compose."
