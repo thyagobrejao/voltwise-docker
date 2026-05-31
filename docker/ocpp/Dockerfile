@@ -22,7 +22,7 @@ RUN go mod download
 COPY voltwise-ocpp/ .
 
 # Build a statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+RUN CGO_ENABLED=0 GOOS=linux \
     go build -ldflags="-s -w" -o /bin/voltwise-ocpp ./cmd/voltwise-ocpp
 
 # ── Stage 2: minimal runtime ──────────────────────────────────────────────────
