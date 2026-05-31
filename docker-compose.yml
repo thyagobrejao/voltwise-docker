@@ -36,6 +36,8 @@ services:
     environment:
       # Lendo as configurações do banco de dados diretamente do .env (Digital Ocean)
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
+    volumes:
+      - voltwise_static_data:/app/staticfiles
     # depends_on:
     #   voltwise-redis:
     #     condition: service_healthy
@@ -101,6 +103,7 @@ services:
     #   - "443:443"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - voltwise_static_data:/usr/share/nginx/html/static:ro
     depends_on:
       voltwise-cloud:
         condition: service_healthy
@@ -114,8 +117,8 @@ services:
 # =============================================================================
 # Volumes & Networks
 # =============================================================================
-# volumes:
-#   voltwise_redis_data:
+volumes:
+  voltwise_static_data:
 
 networks:
   infra-network:
