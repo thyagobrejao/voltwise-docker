@@ -1,0 +1,149 @@
+# =============================================================================
+# VoltWise — Docker Compose (Ambiente de Desenvolvimento Local)
+#
+# Usage:
+#   cp .env.example .env                       # configurar variáveis locais
+#   docker compose -f docker-compose.local.yml up --build # subir todo o ambiente local
+#
+# Services: voltwise-db, voltwise-redis, voltwise-cloud, voltwise-ocpp, portal, voltwise-nginx
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL Database ───────────────────────────────────────────────────
+  voltwise-db:
+    image: postgres:17-alpine
+    container_name: voltwise-db
+    restart: unless-stopped
+    volumes:
+      - voltwise_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voltwise}
+      POSTGRES_USER: ${POSTGRES_USER:-voltwise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voltwise}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voltwise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - infra-network
+
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  voltwise-redis:
+    image: redis:7-alpine
+    container_name: voltwise-redis
+    restart: unless-stopped
+    volumes:
+      - voltwise_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - infra-network
+
+  # ── voltwise-cloud (Django + Gunicorn) ───────────────────────────────────
+  voltwise-cloud:
+    build:
+      context: ..
+      dockerfile: voltwise-docker/docker/cloud/Dockerfile
+    container_name: voltwise-cloud
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Conecta dinamicamente ao banco de dados e redis locais definidos neste Compose
+      DB_HOST: voltwise-db
+      REDIS_URL: redis://voltwise-redis:6379/1
+    volumes:
+      - voltwise_static_data:/app/staticfiles
+    depends_on:
+      voltwise-db:
+        condition: service_healthy
+      voltwise-redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -so /dev/null -w '%{http_code}' http://localhost:8000/api/ | grep -qE '^[2-4]'" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - infra-network
+    # Developer profile: mount source code for hot reload
+    profiles: [ "", "dev" ]
+
+  # ── voltwise-ocpp (Go WebSocket server) ──────────────────────────────────
+  voltwise-ocpp:
+    build:
+      context: ..
+      dockerfile: voltwise-docker/docker/ocpp/Dockerfile
+    container_name: voltwise-ocpp
+    restart: unless-stopped
+    environment:
+      OCPP_ADDR: ":8080"
+      OCPP_LOG: ${OCPP_LOG:-info}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      CLOUD_BASE_URL: "http://voltwise-cloud:8000"
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/healthz || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - infra-network
+
+  # ── voltwise-portal (Vue SPA) ─────────────────────────────────────────────
+  portal:
+    build:
+      context: ..
+      dockerfile: voltwise-docker/docker/portal/Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: voltwise-portal
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/ || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - infra-network
+
+  # ── Nginx (reverse proxy) ─────────────────────────────────────────────────
+  voltwise-nginx:
+    image: nginx:1.27-alpine
+    container_name: voltwise-nginx
+    restart: unless-stopped
+    # Portas públicas ativadas para desenvolvimento local
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - voltwise_static_data:/usr/share/nginx/html/static:ro
+    depends_on:
+      voltwise-cloud:
+        condition: service_healthy
+      voltwise-ocpp:
+        condition: service_healthy
+      portal:
+        condition: service_healthy
+    networks:
+      - infra-network
+
+# =============================================================================
+# Volumes & Networks
+# =============================================================================
+volumes:
+  voltwise_static_data:
+  voltwise_redis_data:
+  voltwise_postgres_data:
+
+networks:
+  infra-network:
+    name: infra-network
+    driver: bridge
