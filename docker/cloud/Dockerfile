@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy installed packages from deps stage
 COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=deps /usr/local/bin/gunicorn /usr/local/bin/gunicorn
+COPY --from=deps /usr/local/bin/daphne /usr/local/bin/daphne
 
 # Copy application source
 COPY voltwise-cloud/ .
