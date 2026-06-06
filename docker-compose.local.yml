@@ -56,6 +56,8 @@ services:
       # Conecta dinamicamente ao banco de dados e redis locais definidos neste Compose
       DB_HOST: voltwise-db
       REDIS_URL: redis://voltwise-redis:6379/1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - voltwise_static_data:/app/staticfiles
     depends_on:
@@ -110,6 +112,29 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - infra-network
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  voltwise-celery:
+    build:
+      context: ..
+      dockerfile: voltwise-docker/docker/cloud/Dockerfile
+    container_name: voltwise-celery
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: voltwise-db
+      REDIS_URL: redis://voltwise-redis:6379/1
+    entrypoint: []
+    command: python -m celery -A config worker -l info
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      voltwise-db:
+        condition: service_healthy
+      voltwise-redis:
+        condition: service_healthy
     networks:
       - infra-network
 
