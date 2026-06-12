@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": "../../saiuaescala"
+		},
+		{
+			"path": "../../oracle-host"
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../eccnacional"
+		},
+		{
+			"path": "../../gestao_ecc"
+		},
+		{
+			"path": "../../selfiebook"
+		},
+		{
+			"path": "../../quadrantedigital"
+		},
+		{
+			"path": "../../thyblog"
+		}
+	],
+	"settings": {
+		"terminal.integrated.fontFamily": "monospace",
+		"terminal.integrated.fontSize": 14,
+		"terminal.integrated.defaultProfile.linux": "zsh"
+	}
+}
