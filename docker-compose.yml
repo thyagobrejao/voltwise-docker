@@ -91,6 +91,21 @@ services:
     networks:
       - infra-network
 
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  voltwise-celery:
+    build:
+      context: ..
+      dockerfile: voltwise-docker/docker/cloud/Dockerfile
+    container_name: voltwise-celery
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/1}
+    entrypoint: []
+    command: python -m celery -A config worker -l info
+    networks:
+      - infra-network
+
   # ── Nginx (reverse proxy) ─────────────────────────────────────────────────
   voltwise-nginx:
     image: nginx:1.27-alpine
