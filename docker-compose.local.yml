@@ -127,7 +127,7 @@ services:
       DB_HOST: voltwise-db
       REDIS_URL: redis://voltwise-redis:6379/1
     entrypoint: []
-    command: python -m celery -A config worker -l info
+    command: python -m celery -A config worker -B -l info
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

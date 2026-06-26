@@ -13,5 +13,8 @@ python manage.py migrate --noinput
 echo "==> Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
+echo "==> Seeding city catalog (only when empty)..."
+python manage.py sync_cities --if-empty || echo "WARN: city sync skipped/failed (continuing)."
+
 echo "==> Starting Daphne (ASGI)..."
 exec python -m daphne -b 0.0.0.0 -p 8000 config.asgi:application
