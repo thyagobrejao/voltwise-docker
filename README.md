@@ -59,3 +59,35 @@ After running the `setup.sh` script, your base folder structure should look like
 - `setup.sh`: Bash utility script to automate cloning and pulling all dependent projects.
 - `docker-compose.yml`: Definition of all containers and services required to run the entire stack.
 - `.env.example`: Template containing the parameters expected by docker-compose.
+
+## 🏙️ Populating the City Catalog
+
+The `voltwise-cloud` service includes a management command to sync the city catalog from external providers (e.g. **IBGE** for Brazil). It is **idempotent** — matching existing rows by `(country, external_id)` and performing bulk create/update, so it is safe to run on startup or on a schedule.
+
+### Available Options
+
+| Option | Description |
+|--------|-------------|
+| `--country <CODE>` | ISO alpha-2 country code to sync (e.g. `BR`). Without this flag, all active countries are synced. |
+| `--if-empty` | Skips syncing when the city table already has rows — useful for a fast startup path. |
+
+### Running with Docker Compose
+
+After the stack is up, run the command inside the `voltwise-cloud` container:
+
+```bash
+# Sync all active countries
+docker compose run --rm voltwise-cloud python manage.py sync_cities
+
+# Sync a single country (e.g. Brazil)
+docker compose run --rm voltwise-cloud python manage.py sync_cities --country BR
+
+# Sync only if the table is empty (fast startup)
+docker compose run --rm voltwise-cloud python manage.py sync_cities --if-empty
+```
+
+> **Note:** The `--rm` flag automatically removes the container after execution. If the `voltwise-cloud` service uses a **dev profile** with hot-reload, you can also `docker compose exec` into a running container instead:
+>
+> ```bash
+> docker compose exec voltwise-cloud python manage.py sync_cities --country BR
+> ```
